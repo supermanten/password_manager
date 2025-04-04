@@ -69,12 +69,20 @@ class PasswordRepositoryImpl implements PasswordRepository {
         'DELETE FROM passwords WHERE id = ?',
         [id],
       );
-      final affectedRows =
-          _database.updatedRows; // Get affected rows after execute
+      final affectedRows = _database.updatedRows;
       print(
           'Delete attempted for ID $id, affected rows: $affectedRows'); // Debug
       if (affectedRows == 0) {
         throw Exception('No password found with ID $id');
+      }
+      // Check if table is empty and reset sequence
+      final count = _database
+          .select('SELECT COUNT(*) as count FROM passwords')
+          .first['count'] as int;
+      if (count == 0) {
+        _database
+            .execute('DELETE FROM sqlite_sequence WHERE name = "passwords"');
+        print('Reset sequence as table is empty'); // Debug
       }
     } catch (e) {
       throw Exception('Failed to delete password: $e');
@@ -86,4 +94,3 @@ class PasswordRepositoryImpl implements PasswordRepository {
     print('Database disposed'); // Debug
   }
 }
-

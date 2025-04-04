@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:dcli/dcli.dart';
 import '../data/repositories/password_repository.dart';
 import '../domain/entities/password_entity.dart';
 
@@ -8,16 +8,14 @@ class PasswordManagerCLI {
   PasswordManagerCLI(this._repository);
 
   Future<void> run() async {
-    // Now async
     while (true) {
-      stdout.writeln('Password Manager');
-      stdout.writeln('1. Add Password');
-      stdout.writeln('2. List Passwords');
-      stdout.writeln('3. Delete Password');
-      stdout.writeln('4. Exit');
+      print(green('Password Manager'));
+      print('1. Add Password');
+      print('2. List Passwords');
+      print('3. Delete Password');
+      print('4. Exit');
 
-      stdout.write('Select an option (1-4): ');
-      final choice = stdin.readLineSync() ?? '';
+      final choice = ask('Select an option (1-4): ');
 
       try {
         switch (choice) {
@@ -25,34 +23,31 @@ class PasswordManagerCLI {
             _addPassword();
             break;
           case '2':
-            await _showPasswords(); // Await the async method
+            await _showPasswords();
             break;
           case '3':
             _deletePassword();
             break;
           case '4':
             _repository.dispose();
-            stdout.writeln('Goodbye!');
+            print(green('Goodbye!'));
             return;
           default:
-            stdout.writeln('Invalid option');
+            print(red('Invalid option'));
         }
       } catch (e) {
-        stdout.writeln('Error: $e');
+        print(red('Error: $e'));
       }
     }
   }
 
   void _addPassword() {
-    stdout.write('Enter website: ');
-    final website = stdin.readLineSync() ?? '';
-    stdout.write('Enter username: ');
-    final username = stdin.readLineSync() ?? '';
-    stdout.write('Enter password: ');
-    final password = stdin.readLineSync() ?? '';
+    final website = ask('Enter website: ');
+    final username = ask('Enter username: ');
+    final password = ask('Enter password: ', hidden: true);
 
     if (website.isEmpty || username.isEmpty || password.isEmpty) {
-      stdout.writeln('All fields are required');
+      print(red('All fields are required'));
       return;
     }
 
@@ -61,41 +56,39 @@ class PasswordManagerCLI {
       username: username,
       password: password,
     ));
-    stdout.writeln('Password saved successfully');
+    print(green('Password saved successfully'));
   }
 
   Future<void> _showPasswords() async {
-    // Now async
     final passwords = await _repository.getAllPasswords();
     if (passwords.isEmpty) {
-      stdout.writeln('No passwords stored');
+      print(yellow('No passwords stored'));
     } else {
-      stdout.writeln('Stored Passwords:');
+      print(green('Stored Passwords:'));
       for (var entry in passwords) {
-        stdout.writeln('ID: ${entry.id}');
-        stdout.writeln('Website: ${entry.website}');
-        stdout.writeln('Username: ${entry.username}');
-        stdout.writeln('Password: ${entry.password}');
-        stdout.writeln('---');
+        print(blue('ID: ${entry.id}'));
+        print('Website: ${entry.website}');
+        print('Username: ${entry.username}');
+        print('Password: ${entry.password}');
+        print('---');
       }
     }
   }
 
   void _deletePassword() {
-    stdout.write('Enter password ID to delete: ');
-    final idStr = stdin.readLineSync() ?? '';
+    final idStr = ask(red('Enter password ID to delete: '));
     final id = int.tryParse(idStr);
 
     if (id == null) {
-      stdout.writeln('Invalid ID');
+      print(red('Invalid ID'));
       return;
     }
 
     try {
       _repository.deletePassword(id);
-      stdout.writeln('Password deleted successfully');
+      print(green('Password deleted successfully'));
     } catch (e) {
-      stdout.writeln('Delete failed: $e');
+      print(red('Delete failed: $e'));
     }
   }
 }
