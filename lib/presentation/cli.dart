@@ -1,25 +1,30 @@
+import 'dart:io';
 import 'dart:math';
-
-import 'package:dcli/dcli.dart';
+import 'package:dart_console/dart_console.dart';
 import '../data/repositories/password_repository.dart';
 import '../domain/entities/password_entity.dart';
 
 class PasswordManagerCLI {
   final PasswordRepositoryImpl _repository;
+  final Console console = Console();
 
   PasswordManagerCLI(this._repository);
 
   Future<void> run() async {
     while (true) {
-      print(green('Password Manager'));
-      print('1. Add Password');
-      print('2. List Passwords');
-      print('3. Update Password');
-      print('4. Search Passwords');
-      print('5. Delete Password');
-      print('6. Exit');
+      console.clearScreen();
+      console.setForegroundColor(ConsoleColor.green);
+      console.writeLine('Password Manager', TextAlignment.center);
+      console.resetColorAttributes();
+      console.writeLine('1. Add Password');
+      console.writeLine('2. List Passwords');
+      console.writeLine('3. Update Password');
+      console.writeLine('4. Search Passwords');
+      console.writeLine('5. Delete Password');
+      console.writeLine('6. Exit');
 
-      final choice = ask('Select an option (1-4): ');
+      console.write('Select an option (1-6): ');
+      final choice = console.readLine() ?? '';
 
       try {
         switch (choice) {
@@ -34,18 +39,27 @@ class PasswordManagerCLI {
             break;
           case '4':
             await _searchByWebsite();
+            break;
           case '5':
             await _deletePassword();
             break;
           case '6':
             _repository.dispose();
-            print(green('Goodbye!'));
+            console.setForegroundColor(ConsoleColor.green);
+            console.writeLine('Goodbye!', TextAlignment.center);
+            console.resetColorAttributes();
             return;
           default:
-            print(red('Invalid option'));
+            console.setForegroundColor(ConsoleColor.red);
+            console.writeLine('Invalid option', TextAlignment.center);
+            console.resetColorAttributes();
+            sleep(Duration(seconds: 1));
         }
       } catch (e) {
-        print(red('Error: $e'));
+        console.setForegroundColor(ConsoleColor.red);
+        console.writeLine('Error: $e', TextAlignment.center);
+        console.resetColorAttributes();
+        sleep(Duration(seconds: 1));
       }
     }
   }
@@ -70,33 +84,68 @@ class PasswordManagerCLI {
   }
 
   void _printPasswordStrength(String password) {
-    final stenght = _checkPasswordStrength(password);
-
-    if (stenght == 'Weak') {
-      print(red(
-          'Password strength is weak. Please consider using a stronger password.'));
-    } else if (stenght == 'Medium') {
-      print(yellow(
-          'Password strength is medium. Please consider using a stronger password.'));
-    } else if (stenght == 'Strong') {
-      print(green(
-          'Password strength is strong. You can proceed with the password.'));
+    final strength = _checkPasswordStrength(password);
+    if (strength == 'Weak') {
+      console.writeLine(
+          'Password strength is weak. Consider a stronger password.',
+          TextAlignment.center);
+      console.setForegroundColor(ConsoleColor.red);
+      console.writeLine('Weak', TextAlignment.center);
+      console.resetColorAttributes();
+    } else if (strength == 'Medium') {
+      console.writeLine(
+          'Password strength is medium. Consider a stronger password.',
+          TextAlignment.center);
+      console.setForegroundColor(ConsoleColor.yellow);
+      console.writeLine('Medium', TextAlignment.center);
+      console.resetColorAttributes();
+    } else {
+      console.writeLine('Password strength is strong.', TextAlignment.center);
+      console.setForegroundColor(ConsoleColor.green);
+      console.writeLine('Strong', TextAlignment.center);
+      console.resetColorAttributes();
     }
   }
 
+  String _readHiddenInput(String prompt) {
+    console.write(prompt);
+    stdin.echoMode = false; // Hide input
+    final input = stdin.readLineSync() ?? '';
+    stdin.echoMode = true; // Restore visibility
+    console.writeLine(''); // Newline after hidden input
+    return input;
+  }
+
   Future<void> _addPassword() async {
-    final website = ask('Enter website: ');
-    final username = ask('Enter username: ');
+    console.clearScreen();
+    console.writeLine('Add Password', TextAlignment.center);
+    console.write('Enter website: ');
+    final website = console.readLine() ?? '';
+    console.write('Enter username: ');
+    final username = console.readLine() ?? '';
     final passwordInput =
-        ask('Enter password: ', hidden: true, required: false);
+        _readHiddenInput('Enter password (leave blank for random): ');
     final password =
         passwordInput.isEmpty ? _generatePassword(12) : passwordInput;
 
+    if (website.isEmpty || username.isEmpty) {
+      console.setForegroundColor(ConsoleColor.red);
+      console.writeLine(
+          'Website and username are required', TextAlignment.center);
+      console.resetColorAttributes();
+      sleep(Duration(seconds: 1));
+      return;
+    }
+
     final existing = await _repository.searchByWebsite(website);
     if (existing.any((e) => e.website == website && e.username == username)) {
-      final choice = ask(yellow(
-          'Warning: An entry for $website/$username already exists. Continue? (y/n): '));
-      if ((choice).toLowerCase() != 'y') return;
+      console.setForegroundColor(ConsoleColor.yellow);
+      console.writeLine(
+          'Warning: An entry for $website/$username already exists.',
+          TextAlignment.center);
+      console.resetColorAttributes();
+      console.write('Continue? (y/n): ');
+      if ((console.readLine() ?? 'n').toLowerCase() != 'y') return;
     }
 
     _printPasswordStrength(password);
@@ -105,76 +154,139 @@ class PasswordManagerCLI {
       username: username,
       password: password,
     ));
-    print(green('Password saved successfully'));
+    console.setForegroundColor(ConsoleColor.green);
+    console.writeLine('Password saved successfully', TextAlignment.center);
+    if (passwordInput.isEmpty) {
+      console.writeLine('Generated password: $password', TextAlignment.center);
+    }
+    console.resetColorAttributes();
+    console.writeLine('Press Enter to return...');
+    console.readLine();
   }
 
   Future<void> _showPasswords() async {
     final passwords = await _repository.getAllPasswords();
+    console.clearScreen();
+    console.writeLine('Stored Passwords', TextAlignment.center);
+
     if (passwords.isEmpty) {
-      print(yellow('No passwords stored'));
+      console.setForegroundColor(ConsoleColor.yellow);
+      console.writeLine('No passwords stored', TextAlignment.center);
+      console.resetColorAttributes();
     } else {
-      print(green('Stored Passwords:'));
-      for (var entry in passwords) {
-        print(blue('ID: ${entry.id}'));
-        print('Website: ${entry.website}');
-        print('Username: ${entry.username}');
-        print('Password: ${entry.password}');
-        print('---');
+      final table = Table()
+        ..borderStyle = BorderStyle.square
+        ..borderType = BorderType.horizontal;
+
+      table.insertRow([
+        '\x1B[1mID\x1B[0m',
+        '\x1B[1mWebsite\x1B[0m',
+        '\x1B[1mUsername\x1B[0m',
+        '\x1B[1mPassword\x1B[0m'
+      ]); // Add data rows
+      for (final entry in passwords) {
+        table.insertRow([
+          entry.id.toString(),
+          entry.website,
+          entry.username,
+          entry.password
+        ]);
       }
+
+      console.write(table);
     }
+    console.writeLine('\nPress Enter to return...');
+    console.readLine();
   }
 
   Future<void> _deletePassword() async {
     final passwords = await _repository.getAllPasswords();
+    console.clearScreen();
+    console.writeLine('Delete Password', TextAlignment.center);
+
     if (passwords.isEmpty) {
-      print(red('No passwords stored'));
+      console.setForegroundColor(ConsoleColor.red);
+      console.writeLine('No passwords stored', TextAlignment.center);
+      console.resetColorAttributes();
+      sleep(Duration(seconds: 1));
       return;
     }
-    final idStr = ask(red('Enter password ID to delete: '));
+
+    console.write('Enter password ID to delete: ');
+    final idStr = console.readLine() ?? '';
     final id = int.tryParse(idStr);
 
     if (id == null) {
-      print(red('Invalid ID'));
+      console.setForegroundColor(ConsoleColor.red);
+      console.writeLine('Invalid ID', TextAlignment.center);
+      console.resetColorAttributes();
+      sleep(Duration(seconds: 1));
       return;
     }
 
     try {
       _repository.deletePassword(id);
-      print(green('Password deleted successfully'));
+      console.setForegroundColor(ConsoleColor.green);
+      console.writeLine('Password deleted successfully', TextAlignment.center);
+      console.resetColorAttributes();
     } catch (e) {
-      print(red('Delete failed: $e'));
+      console.setForegroundColor(ConsoleColor.red);
+      console.writeLine('Delete failed: $e', TextAlignment.center);
+      console.resetColorAttributes();
     }
+    sleep(Duration(seconds: 1));
   }
 
   Future<void> _updatePassword() async {
     final passwords = await _repository.getAllPasswords();
+    console.clearScreen();
+    console.writeLine('Update Password', TextAlignment.center);
+
     if (passwords.isEmpty) {
-      print(red('No passwords stored'));
+      console.setForegroundColor(ConsoleColor.red);
+      console.writeLine('No passwords stored', TextAlignment.center);
+      console.resetColorAttributes();
+      sleep(Duration(seconds: 1));
       return;
     }
-    final idStr = ask(orange('Enter password ID to update: '));
+
+    console.write('Enter password ID to update: ');
+    final idStr = console.readLine() ?? '';
     final id = int.tryParse(idStr);
 
-    // Show current entry (optional, for user reference)
+    if (id == null) {
+      console.setForegroundColor(ConsoleColor.red);
+      console.writeLine('Invalid ID', TextAlignment.center);
+      console.resetColorAttributes();
+      sleep(Duration(seconds: 1));
+      return;
+    }
+
     final entryToUpdate = passwords.firstWhere(
       (entry) => entry.id == id,
       orElse: () =>
           PasswordEntity(id: null, website: '', username: '', password: ''),
     );
     if (entryToUpdate.id == null) {
-      print(red('No password found with ID $id'));
+      console.setForegroundColor(ConsoleColor.red);
+      console.writeLine('No password found with ID $id', TextAlignment.center);
+      console.resetColorAttributes();
+      sleep(Duration(seconds: 1));
       return;
     }
 
-    print(green('Current entry:'));
-    print(blue('Website: ${entryToUpdate.website}'));
-    print(blue('Username: ${entryToUpdate.username}'));
-    print(blue('Password: ${entryToUpdate.password}'));
-    print(orange('Leave blank to keep current value.'));
+    console.writeLine('Current Entry:', TextAlignment.center);
+    console.writeLine('Website: ${entryToUpdate.website}');
+    console.writeLine('Username: ${entryToUpdate.username}');
+    console.writeLine('Password: ${entryToUpdate.password}');
+    console.writeLine(
+        'Leave blank to keep current value.', TextAlignment.center);
 
-    final website = ask(green('Enter new website: '), required: false);
-    final username = ask(green('Enter new username: '), required: false);
-    final password = ask(green('Enter new password: '), required: false);
+    console.write('Enter new website: ');
+    final website = console.readLine() ?? '';
+    console.write('Enter new username: ');
+    final username = console.readLine() ?? '';
+    final password = _readHiddenInput('Enter new password: ');
 
     final updatedEntry = PasswordEntity(
       id: id,
@@ -183,32 +295,62 @@ class PasswordManagerCLI {
       password: password.isEmpty ? entryToUpdate.password : password,
     );
 
-    _printPasswordStrength(password);
+    _printPasswordStrength(updatedEntry.password);
 
     await _repository.updatePassword(updatedEntry);
-    print(red('Password updated successfully'));
+    console.setForegroundColor(ConsoleColor.green);
+    console.writeLine('Password updated successfully', TextAlignment.center);
+    console.resetColorAttributes();
+    console.writeLine('Press Enter to return...');
+    console.readLine();
   }
 
   Future<void> _searchByWebsite() async {
     final passwords = await _repository.getAllPasswords();
+    console.clearScreen();
+    console.writeLine('Search Passwords', TextAlignment.center);
+
     if (passwords.isEmpty) {
-      print(red('No passwords stored'));
+      console.setForegroundColor(ConsoleColor.red);
+      console.writeLine('No passwords stored', TextAlignment.center);
+      console.resetColorAttributes();
+      sleep(Duration(seconds: 1));
       return;
     }
-    final searchTerm = ask(green('Enter website name to search: '));
+
+    console.write('Enter website name to search: ');
+    final searchTerm = console.readLine() ?? '';
 
     final matches = await _repository.searchByWebsite(searchTerm);
     if (matches.isEmpty) {
-      print(red('No matching records found for website "$searchTerm"'));
+      console.setForegroundColor(ConsoleColor.red);
+      console.writeLine('No matching records found for website "$searchTerm"',
+          TextAlignment.center);
+      console.resetColorAttributes();
     } else {
-      print(green('Matching Records:'));
-      for (var entry in matches) {
-        print(blue('ID: ${entry.id}'));
-        print(blue('Website: ${entry.website}'));
-        print(blue('Username: ${entry.username}'));
-        print(blue('Password: ${entry.password}'));
-        print(blue('---'));
+      final table = Table()
+        ..borderStyle = BorderStyle.square
+        ..borderType = BorderType.horizontal;
+
+      table.insertRow([
+        '\x1B[1mID\x1B[0m',
+        '\x1B[1mWebsite\x1B[0m',
+        '\x1B[1mUsername\x1B[0m',
+        '\x1B[1mPassword\x1B[0m'
+      ]);
+      for (final entry in matches) {
+        table.insertRow([
+          entry.id.toString(),
+          entry.website,
+          entry.username,
+          entry.password
+        ]);
       }
+
+      console.writeLine('Matching Records:', TextAlignment.center);
+      console.write(table);
     }
+    console.writeLine('\nPress Enter to return...');
+    console.readLine();
   }
 }

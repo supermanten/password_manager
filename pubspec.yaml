@@ -10,7 +10,8 @@ environment:
 dependencies:
   path: ^1.8.0
   sqlite3: ^2.7.5
-  dcli: ^7.0.2   
+  # dcli: ^7.0.2   
+  dart_console: ^4.1.1
 
 dev_dependencies:
   lints: ^5.0.0
