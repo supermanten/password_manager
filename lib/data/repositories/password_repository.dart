@@ -14,7 +14,6 @@ class PasswordRepositoryImpl implements PasswordRepository {
   void _initDatabase() {
     try {
       final dbPath = join(Directory.current.path, 'passwords.db');
-      print('Database path: $dbPath'); // Debug
       _database = sqlite3.open(dbPath);
 
       _database.execute('''
@@ -25,7 +24,6 @@ class PasswordRepositoryImpl implements PasswordRepository {
           password TEXT NOT NULL
         )
       ''');
-      print('Database initialized'); // Debug
     } catch (e) {
       throw Exception('Failed to initialize database: $e');
     }
@@ -38,7 +36,6 @@ class PasswordRepositoryImpl implements PasswordRepository {
         'INSERT INTO passwords (website, username, password) VALUES (?, ?, ?)',
         [entry.website, entry.username, entry.password],
       );
-      print('Added: ${entry.website}, ${entry.username}'); // Debug
     } catch (e) {
       throw Exception('Failed to add password: $e');
     }
@@ -48,7 +45,6 @@ class PasswordRepositoryImpl implements PasswordRepository {
   Future<List<PasswordEntity>> getAllPasswords() async {
     try {
       final result = _database.select('SELECT * FROM passwords');
-      print('Retrieved ${result.length} rows'); // Debug
       return result.map((row) {
         return PasswordEntity(
           id: row['id'] as int?,
@@ -70,8 +66,6 @@ class PasswordRepositoryImpl implements PasswordRepository {
         [id],
       );
       final affectedRows = _database.updatedRows;
-      print(
-          'Delete attempted for ID $id, affected rows: $affectedRows'); // Debug
       if (affectedRows == 0) {
         throw Exception('No password found with ID $id');
       }
@@ -82,15 +76,54 @@ class PasswordRepositoryImpl implements PasswordRepository {
       if (count == 0) {
         _database
             .execute('DELETE FROM sqlite_sequence WHERE name = "passwords"');
-        print('Reset sequence as table is empty'); // Debug
       }
     } catch (e) {
       throw Exception('Failed to delete password: $e');
     }
   }
 
+  @override
+  Future<void> updatePassword(PasswordEntity entry) async {
+    try {
+      if (entry.id == null) {
+        throw Exception('Cannot update: ID is required');
+      }
+
+      _database.execute(
+        'UPDATE passwords SET website = ?, username = ?, password = ? WHERE id = ?',
+        [entry.website, entry.username, entry.password, entry.id],
+      );
+      final affectedRows = _database.updatedRows;
+
+      if (affectedRows == 0) {
+        throw Exception('No password found with ID ${entry.id}');
+      }
+    } catch (e) {
+      throw Exception('Failed to update password: $e');
+    }
+  }
+
+  @override
+  Future<List<PasswordEntity>> searchByWebsite(String website) async {
+    try {
+      final result = _database.select(
+        'SELECT * FROM passwords WHERE website LIKE ?',
+        ['%$website%'], // Using LIKE with wildcards for partial matches
+      );
+      return result.map((row) {
+        return PasswordEntity(
+          id: row['id'] as int?,
+          website: row['website'] as String,
+          username: row['username'] as String,
+          password: row['password'] as String,
+        );
+      }).toList();
+    } catch (e) {
+      throw Exception('Failed to search passwords: $e');
+    }
+  }
+
   void dispose() {
     _database.dispose();
-    print('Database disposed'); // Debug
   }
 }
