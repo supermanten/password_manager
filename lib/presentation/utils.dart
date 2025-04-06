@@ -110,7 +110,7 @@ Future<PasswordEntity?> selectPassword(
         TextAlignment.center);
 
     final table = Table()
-      ..borderStyle = BorderStyle.square
+      ..borderStyle = BorderStyle.rounded
       ..borderType = BorderType.horizontal
       ..insertRow(['ID', 'Website', 'Username', 'Password']);
 

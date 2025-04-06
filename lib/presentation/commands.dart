@@ -86,7 +86,7 @@ class ListPasswordsCommand implements Command {
           TextAlignment.center);
 
       final table = Table()
-        ..borderStyle = BorderStyle.square
+        ..borderStyle = BorderStyle.rounded
         ..borderType = BorderType.horizontal
         ..insertRow(['ID', 'Website', 'Username', 'Password']);
 
@@ -123,7 +123,7 @@ class ListPasswordsCommand implements Command {
 
         switch (action) {
           case '1':
-            await _editPassword(console, repository, selectedEntry);
+            await utils.editPassword(console, repository, selectedEntry);
             return;
           case '2':
             await repository.deletePassword(selectedEntry.id!);
@@ -151,39 +151,6 @@ class ListPasswordsCommand implements Command {
         }
       }
     }
-  }
-
-  Future<void> _editPassword(Console console, PasswordRepositoryImpl repository,
-      PasswordEntity entry) async {
-    console.clearScreen();
-    console.writeLine('Edit Password: ID ${entry.id}', TextAlignment.center);
-    console.writeLine('Current Entry:', TextAlignment.center);
-    console.writeLine('Website: ${entry.website}');
-    console.writeLine('Username: ${entry.username}');
-    console.writeLine('Password: ${entry.password}');
-    console.writeLine(
-        'Leave blank to keep current value.', TextAlignment.center);
-
-    console.write('Enter new website: ');
-    final website = console.readLine() ?? '';
-    console.write('Enter new username: ');
-    final username = console.readLine() ?? '';
-    final password = utils.readHiddenInput(console, 'Enter new password: ');
-
-    final updatedEntry = PasswordEntity(
-      id: entry.id,
-      website: website.isEmpty ? entry.website : website,
-      username: username.isEmpty ? entry.username : username,
-      password: password.isEmpty ? entry.password : password,
-    );
-
-    utils.printPasswordStrength(console, updatedEntry.password);
-    await repository.updatePassword(updatedEntry);
-    console.setForegroundColor(ConsoleColor.green);
-    console.writeLine('Password updated successfully', TextAlignment.center);
-    console.resetColorAttributes();
-    console.writeLine('Press Enter to return...');
-    console.readLine();
   }
 }
 
