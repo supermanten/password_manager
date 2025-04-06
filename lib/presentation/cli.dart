@@ -60,6 +60,30 @@ class PasswordManagerCLI {
     );
   }
 
+  String _checkPasswordStrength(String password) {
+    if (password.length < 8) return 'Weak';
+    if (password.contains(RegExp(r'[A-Z]')) &&
+        password.contains(RegExp(r'[a-z]')) &&
+        password.contains(RegExp(r'[0-9]')) &&
+        password.contains(RegExp(r'[!@#\$%^&*]'))) return 'Strong';
+    return 'Medium';
+  }
+
+  void _printPasswordStrength(String password) {
+    final stenght = _checkPasswordStrength(password);
+
+    if (stenght == 'Weak') {
+      print(red(
+          'Password strength is weak. Please consider using a stronger password.'));
+    } else if (stenght == 'Medium') {
+      print(yellow(
+          'Password strength is medium. Please consider using a stronger password.'));
+    } else if (stenght == 'Strong') {
+      print(green(
+          'Password strength is strong. You can proceed with the password.'));
+    }
+  }
+
   Future<void> _addPassword() async {
     final website = ask('Enter website: ');
     final username = ask('Enter username: ');
@@ -75,6 +99,7 @@ class PasswordManagerCLI {
       if ((choice).toLowerCase() != 'y') return;
     }
 
+    _printPasswordStrength(password);
     _repository.addPassword(PasswordEntity(
       website: website,
       username: username,
@@ -157,6 +182,8 @@ class PasswordManagerCLI {
       username: username.isEmpty ? entryToUpdate.username : username,
       password: password.isEmpty ? entryToUpdate.password : password,
     );
+
+    _printPasswordStrength(password);
 
     await _repository.updatePassword(updatedEntry);
     print(red('Password updated successfully'));
