@@ -19,7 +19,9 @@ String checkPasswordStrength(String password) {
   if (password.contains(RegExp(r'[A-Z]')) &&
       password.contains(RegExp(r'[a-z]')) &&
       password.contains(RegExp(r'[0-9]')) &&
-      password.contains(RegExp(r'[!@#\$%^&*]'))) return 'Strong';
+      password.contains(RegExp(r'[!@#\$%^&*]'))) {
+    return 'Strong';
+  }
   return 'Medium';
 }
 
@@ -135,10 +137,13 @@ Future<PasswordEntity?> selectPassword(
     } else if (key.isControl && key.controlChar == ControlCharacter.enter) {
       return passwords[selectedIndex];
     } else if (key.isControl) {
-      if (key.controlChar == ControlCharacter.arrowUp && selectedIndex > 0)
+      if (key.controlChar == ControlCharacter.arrowUp && selectedIndex > 0) {
         selectedIndex--;
+      }
       if (key.controlChar == ControlCharacter.arrowDown &&
-          selectedIndex < passwords.length - 1) selectedIndex++;
+          selectedIndex < passwords.length - 1) {
+        selectedIndex++;
+      }
     }
   }
   return null;

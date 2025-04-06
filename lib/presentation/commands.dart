@@ -142,10 +142,13 @@ class ListPasswordsCommand implements Command {
             sleep(Duration(seconds: 1));
         }
       } else if (key.isControl) {
-        if (key.controlChar == ControlCharacter.arrowUp && selectedIndex > 0)
+        if (key.controlChar == ControlCharacter.arrowUp && selectedIndex > 0) {
           selectedIndex--;
+        }
         if (key.controlChar == ControlCharacter.arrowDown &&
-            selectedIndex < passwords.length - 1) selectedIndex++;
+            selectedIndex < passwords.length - 1) {
+          selectedIndex++;
+        }
       }
     }
   }

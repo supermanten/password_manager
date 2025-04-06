@@ -40,10 +40,13 @@ class PasswordManagerCLI {
           await commands[selectedIndex].execute(console, _repository);
         }
       } else if (key.isControl) {
-        if (key.controlChar == ControlCharacter.arrowUp && selectedIndex > 0)
+        if (key.controlChar == ControlCharacter.arrowUp && selectedIndex > 0) {
           selectedIndex--;
+        }
         if (key.controlChar == ControlCharacter.arrowDown &&
-            selectedIndex < menuOptions.length - 1) selectedIndex++;
+            selectedIndex < menuOptions.length - 1) {
+          selectedIndex++;
+        }
       }
     }
     _repository.dispose();
