@@ -1,9 +1,9 @@
 import 'package:dart_console/dart_console.dart';
+import '../domain/repositories/password_repository.dart';
 import 'commands.dart';
-import '../data/repositories/password_repository.dart';
 
 class PasswordManagerCLI {
-  final PasswordRepositoryImpl _repository;
+  final PasswordRepository _repository;
   final Console console = Console();
   final List<Command> commands = [
     AddPasswordCommand(),

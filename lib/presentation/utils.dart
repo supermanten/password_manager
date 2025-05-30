@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'dart:math';
 import 'package:dart_console/dart_console.dart';
-import '../data/repositories/password_repository.dart';
 import '../domain/entities/password_entity.dart';
+import '../domain/repositories/password_repository.dart';
 
 String generatePassword(int length) {
   const chars =
@@ -58,7 +58,7 @@ String readHiddenInput(Console console, String prompt) {
   return input;
 }
 
-Future<void> editPassword(Console console, PasswordRepositoryImpl repository,
+Future<void> editPassword(Console console, PasswordRepository repository,
     PasswordEntity entry) async {
   console.clearScreen();
   console.writeLine('Edit Password: ID ${entry.id}', TextAlignment.center);

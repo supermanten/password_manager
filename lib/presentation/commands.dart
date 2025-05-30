@@ -1,18 +1,17 @@
 import 'dart:io';
 
 import 'package:dart_console/dart_console.dart';
-import '../data/repositories/password_repository.dart';
 import '../domain/entities/password_entity.dart';
+import '../domain/repositories/password_repository.dart';
 import 'utils.dart' as utils;
 
 abstract class Command {
-  Future<void> execute(Console console, PasswordRepositoryImpl repository);
+  Future<void> execute(Console console, PasswordRepository repository);
 }
 
 class AddPasswordCommand implements Command {
   @override
-  Future<void> execute(
-      Console console, PasswordRepositoryImpl repository) async {
+  Future<void> execute(Console console, PasswordRepository repository) async {
     console.clearScreen();
     console.writeLine('Add Password', TextAlignment.center);
     console.write('Enter website: ');
@@ -63,8 +62,7 @@ class AddPasswordCommand implements Command {
 
 class ListPasswordsCommand implements Command {
   @override
-  Future<void> execute(
-      Console console, PasswordRepositoryImpl repository) async {
+  Future<void> execute(Console console, PasswordRepository repository) async {
     final passwords = await repository.getAllPasswords();
     if (passwords.isEmpty) {
       console.clearScreen();
@@ -156,8 +154,7 @@ class ListPasswordsCommand implements Command {
 
 class SearchPasswordsCommand implements Command {
   @override
-  Future<void> execute(
-      Console console, PasswordRepositoryImpl repository) async {
+  Future<void> execute(Console console, PasswordRepository repository) async {
     console.clearScreen();
     console.writeLine('Search Passwords', TextAlignment.center);
     console.write('Enter website name to search: ');
@@ -201,8 +198,7 @@ class SearchPasswordsCommand implements Command {
 
 class DeletePasswordCommand implements Command {
   @override
-  Future<void> execute(
-      Console console, PasswordRepositoryImpl repository) async {
+  Future<void> execute(Console console, PasswordRepository repository) async {
     final passwords = await repository.getAllPasswords();
     console.clearScreen();
     console.writeLine('Delete Password', TextAlignment.center);
@@ -243,8 +239,7 @@ class DeletePasswordCommand implements Command {
 
 class UpdatePasswordCommand implements Command {
   @override
-  Future<void> execute(
-      Console console, PasswordRepositoryImpl repository) async {
+  Future<void> execute(Console console, PasswordRepository repository) async {
     final passwords = await repository.getAllPasswords();
     console.clearScreen();
     console.writeLine('Update Password', TextAlignment.center);

@@ -123,6 +123,7 @@ class PasswordRepositoryImpl implements PasswordRepository {
     }
   }
 
+  @override
   void dispose() {
     _database.dispose();
   }
